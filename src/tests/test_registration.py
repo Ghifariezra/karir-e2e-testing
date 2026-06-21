@@ -42,3 +42,8 @@ def test_regis_neg_password_weak():
 def test_regis_neg_password_mismatch():
     app = Karir()
     app.formRegistration_Negative_Password_Mismatch()
+    
+@pytest.mark.run(order=8)
+def test_regis_neg_xss_injection():
+    app = Karir()
+    app.formRegistration_Negative_XSS_Injection()

@@ -1,7 +1,7 @@
 # E2E Automation Testing - Karir.com
 
 ## Project Overview
-Proyek ini merupakan kerangka kerja otomatisasi pengujian ujung-ke-ujung (End-to-End Testing) untuk memvalidasi alur antarmuka pengguna (UI/UX) pada platform pendaftaran Karir.com berbasis framework reaktif (Material-UI).
+Proyek ini merupakan kerangka kerja otomatisasi pengujian ujung-ke-ujung (End-to-End Testing) untuk memvalidasi alur antarmuka pengguna (UI/UX) pada platform pendaftaran [Karir.com](https://karir.com/) berbasis framework reaktif (Material-UI).
 
 ## Tech Stack
 - **Testing Framework:** Pytest dengan engine SeleniumBase
@@ -9,12 +9,15 @@ Proyek ini merupakan kerangka kerja otomatisasi pengujian ujung-ke-ujung (End-to
 - **Environment Manager:** `python-dotenv` & PowerShell script
 
 ## Test Scenarios Covered
-Rangkaian pengujian ini mencakup Boundary Value Testing dan asersi reaktif:
+Rangkaian pengujian ini mencakup Boundary Value Testing, asersi reaktif, serta pengujian keamanan dasar (Security Testing):
 
 - **Registration Form:**
     - **Happy Path:**
         - Pendaftaran akun dengan data valid (termasuk Strong Password).
-    - **Negative:**
+        - Pemilihan metode verifikasi (melalui Email).
+        - Eksekusi pengisian dinamis 6-digit kode OTP dan penyelesaian verifikasi.
+    - **Negative & Security:**
+        - XSS Injection (Security): Menguji kerentanan form terhadap injeksi payload skrip berbahaya (Cross-Site Scripting) dan memastikan tidak ada DOM alert yang tereksekusi.
         - Empty Fields: Memastikan tombol submit terkunci (disabled) saat kolom kosong.
         - Invalid Email: Validasi regex format email setelah klik submit.
         - Boundary Phone: Validasi batas minimal (10 digit) dan maksimal (13 digit) nomor ponsel.

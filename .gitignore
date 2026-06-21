@@ -10,6 +10,7 @@ __pycache__/
 # --- Berkas Konfigurasi & Sensitif ---
 .env
 .pytest_cache/
+latest_logs/
 
 # --- Laporan Pengujian (Pytest) ---
 report.html

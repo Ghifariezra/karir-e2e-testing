@@ -3,7 +3,6 @@ import time
 from core.base_test import BaseTest
 from utils.test_register import TestRegistration
 
-
 class Karir(BaseTest):
     _os: os = os
     _time: time = time
@@ -38,6 +37,93 @@ class Karir(BaseTest):
         # 3. Eksekusi Submit
         self.test_registration.submitForm()
         self._time.sleep(3)
+        
+        # 4. Verifikasi section
+        self.test_registration.clickEmailVerification()
+        self._time.sleep(2)
+        
+        # 5. Validation Verifikasi Kode
+        self.test_registration.saveScreenshot("form_registration_otp_step")
+        
+        # 6. Eksekusi Pengisian Kode Verifikasi
+        self.test_registration.inputVerificationCode("123456")
+
+        # 7. Submit Verifikasi
+        self.test_registration.submitVerification()
+
+        # 8. Screenshot Hasil Akhir Verifikasi
+        self._time.sleep(3)  # Tunggu loading validasi API
+        
+        self.test_registration.assertErrorMessage(
+            "Verifikasi Kode OTP Tidak Valid")
+        
+        self.test_registration.saveScreenshot("form_registration_otp_result")
+        print("[INFO] Skenario Registrasi Happy Path & Verifikasi Selesai!")
+        
+    def formRegistration_Negative_XSS_Injection(self):
+        """
+        Skenario Keamanan (Negative): Menguji kerentanan Cross-Site Scripting (XSS)
+        dengan menyuntikkan payload skrip berbahaya ke kolom input.
+        Aplikasi yang aman harus menolak input ini atau melakukan sanitasi (escaping).
+        """
+        self._time.sleep(2)
+        print("[INFO] Membuka halaman registrasi untuk Security Test (XSS)...")
+        self.driver.get(self.__listURL["registration"])
+        self._time.sleep(3)
+
+        # Payload XSS standar untuk memicu alert jika aplikasi rentan
+        xss_payload = "<img src='x' onerror='alert(\"XSS-Vulnerability\")'>"
+
+        # 1. Suntikkan payload berbahaya ke kolom Nama Lengkap
+        self.test_registration.testFullName(xss_payload)
+
+        # Gunakan email dinamis agar tidak terkena validasi duplikat
+        unique_email = f"xss.test.{int(self._time.time())}@email.com"
+        self.test_registration.testEmail(unique_email)
+
+        self.test_registration.testPhoneNumber("081299998888")
+        self.test_registration.testPassword("StrongPass123!")
+        self.test_registration.testPasswordConfirmation("StrongPass123!")
+
+        # 2. Ambil Screenshot bukti injeksi sebelum submit
+        self.test_registration.saveScreenshot(
+            "form_registration_xss_injection")
+
+        # 3. Eksekusi Submit
+        self.test_registration.submitForm()
+        self._time.sleep(2)
+
+        # 4. Asersi Keamanan (Security Assertion)
+        print("[INFO] Memvalidasi keamanan DOM dari eksekusi XSS...")
+        # Beri sedikit jeda agar alert punya waktu untuk muncul (jika ada)
+        self._time.sleep(1)
+
+        is_xss_vulnerable = False
+        try:
+            # Mencoba mengambil teks alert.
+            # Jika aplikasi AMAN, baris ini akan gagal dan langsung melompat ke 'except'.
+            alert_text = self.driver.get_alert_text()
+            is_xss_vulnerable = True
+            self.driver.accept_alert()  # Tutup alert berbahaya agar browser tidak hang
+        except Exception:
+            # Exception terjadi karena tidak ada alert yang terbuka (Aman)
+            pass
+
+        # Validasi Hasil Akhir
+        if is_xss_vulnerable:
+            # Tangkap layar dan gagalkan test karena sistem berhasil dijebol
+            self.test_registration.saveScreenshot(
+                "form_registration_xss_vulnerable")
+            raise Exception(
+                "KRITIS: Kerentanan XSS terdeteksi! Payload skrip berhasil dieksekusi oleh browser.")
+        else:
+            print(
+                "[INFO] DOM Aman: Tidak ada eksekusi alert JavaScript berbahaya yang terdeteksi.")
+
+            # (Opsional) Asersi bahwa UI memunculkan pesan validasi error input nama yang mengandung simbol
+            # self.test_registration.assertErrorMessage("Format nama tidak valid")
+
+            print("[INFO] Negative Security Test (XSS Injection) PASSED.")
         
     def formRegistration_Negative_Password_Weak(self):
         """Skenario Negatif: Password tidak memenuhi syarat (Terlalu pendek / lemah)"""

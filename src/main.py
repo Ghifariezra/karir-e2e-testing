@@ -2,7 +2,8 @@ from core.karir import Karir
 
 def main():
     karir = Karir()
-    karir.formRegistration()
+    # karir.formRegistration()
+    karir.formRegistration_Negative_XSS_Injection()
     # karir.formLogin()
     # karir.formSearch()
     # karir.formApply()
