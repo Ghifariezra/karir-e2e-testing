@@ -169,7 +169,7 @@ class TestRegistration(BaseRegistrationScenario):
         print(f"[DEBUG] Memvalidasi kemunculan error: '{expected_text}'")
         # Di Material-UI, pesan error biasanya menggunakan class Mui-error
         # Tambahkan timeout 20 detik untuk mengantisipasi latensi respons API di cloud
-        self.driver.assert_text(expected_text, timeout=20)
+        self.driver.wait_for_text_visible(expected_text, timeout=25)
         
     def clickEmailVerification(self):
         """
