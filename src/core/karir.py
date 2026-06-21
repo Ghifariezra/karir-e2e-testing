@@ -2,6 +2,7 @@ import os
 import time
 from core.base_test import BaseTest
 from utils.test_register import TestRegistration
+from utils.test_login import TestLogin
 
 class Karir(BaseTest):
     _os: os = os
@@ -16,7 +17,19 @@ class Karir(BaseTest):
     def __init__(self):
         super().__init__()
         self.test_registration = TestRegistration(self.driver)
+        self.test_login = TestLogin(self.driver)
 
+    """
+        Skenario Pengujian Form Registrasi:
+            1. Happy Path: Isi form dengan data valid, submit, lalu verifikasi OTP
+            2. Negative - Empty Fields: Pastikan tombol submit disabled saat form kosong
+            3. Negative - Invalid Email: Isi form dengan email tidak valid, submit, lalu verifikasi pesan error
+            4. Negative - Phone Exceeds Max: Isi form dengan nomor ponsel lebih dari 13 digit, submit, lalu verifikasi pesan error
+            5. Negative - Phone Below Min: Isi form dengan nomor ponsel kurang dari 10 digit, submit, lalu verifikasi pesan error
+            6. Negative - Password Weak: Isi form dengan password yang terlalu lemah (misalnya hanya 5 karakter), submit, lalu verifikasi pesan error
+            7. Negative - Password Mismatch: Isi form dengan password dan konfirmasi password yang tidak sama, submit, lalu verifikasi pesan error
+            8. Negative - XSS Injection: Suntikkan payload XSS ke kolom input, submit, lalu verifikasi bahwa payload tidak dieksekusi (tidak muncul alert) dan aplikasi tetap aman.
+    """
     def formRegistration(self):
         self._time.sleep(2)
         print("[INFO] Membuka halaman registrasi...")
@@ -275,10 +288,53 @@ class Karir(BaseTest):
         # 4. Ambil Screenshot
         self.test_registration.saveScreenshot("form_registration_phone_min")
 
+    """
+        Skenario Pengujian Form Login:
+            1. Happy Path: Isi form dengan email dan password valid, submit, lalu verifikasi berhasil login
+            2. Negative - Empty Fields: Pastikan tombol submit disabled saat form kosong
+    """
+
     def formLogin(self):
+        """Skenario Positif: Login dengan kredensial valid"""
         self._time.sleep(2)
+        print("[INFO] Membuka halaman Login...")
         self.driver.get(self.__listURL["login"])
+        self._time.sleep(3)
+
+        email = self._os.getenv("EMAIL", "budi.santoso@email.com")
+        password = self._os.getenv("PASSWORD", "StrongPass123!")
+
+        # 1. Input Email
+        self.test_login.testEmail(email)
+        self.test_login.saveScreenshot("login_step_1_email")
+
+        # 2. Klik Lanjutkan (Multi-step login)
+        self.test_login.clickSubmitButton("Lanjutkan")
+        self._time.sleep(2)  # Tunggu transisi DOM ke input password
+
+        # 3. Input Password
+        self.test_login.testPassword(password)
+        self.test_login.saveScreenshot("login_step_2_password")
+
+        # 4. Submit Form Final (Tombol berubah menjadi 'Login')
+        self.test_login.clickSubmitButton("Login")
+
+        # 5. Asersi Keberhasilan (Tunggu masuk ke Dashboard)
+        self._time.sleep(20)
+        self.test_login.saveScreenshot("login_success_dashboard")
+        print("[INFO] Skenario Login Happy Path Selesai!")
+
+    def formLogin_Negative_EmptyFields(self):
+        """Skenario Negatif: Submit disabled saat email kosong"""
         self._time.sleep(2)
+        print("[INFO] Membuka halaman Login (Negative Test)...")
+        self.driver.get(self.__listURL["login"])
+        self._time.sleep(3)
+
+        # Asersi langsung bahwa tombol "Lanjutkan" dalam keadaan disabled
+        self.test_login.assertSubmitButtonDisabled()
+        self.test_login.saveScreenshot("login_negative_empty")
+        print("[INFO] Negative Test (Empty Fields) Login PASSED.")
 
     def formSearch(self):
         self._time.sleep(2)

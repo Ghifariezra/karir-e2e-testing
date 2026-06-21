@@ -1,1 +1,0 @@
-python -m pytest .\src\tests\test_registration.py -n 5 -v --html=report.html

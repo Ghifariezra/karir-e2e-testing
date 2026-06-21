@@ -32,9 +32,13 @@ jobs:
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Run E2E Tests in Parallel
+        env:
+          HEADLESS: ${{ env.HEADLESS }}
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           # Ditambahkan argumen HTML report agar ter-generate secara sebaris
-          HEADLESS=true python -m pytest src/tests/test_registration.py -n 5 -v --html=report.html --self-contained-html
+          python -m pytest src/tests/test_registration.py src/tests/test_login.py -n 5 -v --html=report.html --self-contained-html
 
       - name: Upload Test Report (Artifact)
         uses: actions/upload-artifact@v4
