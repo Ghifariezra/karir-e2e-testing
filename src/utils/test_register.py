@@ -8,14 +8,18 @@ class TestRegistration(BaseRegistrationScenario):
 
     def _get_input_css(self, label_text):
         """
-        Helper Absolut (Fixed): Menggunakan DOM Traversal via JS untuk menembus 
-        struktur Material-UI (Reaktif) dan langsung mengunci elemen <input> 
-        di bawah label terkait secara akurat tanpa bergantung pada atribut 'for'.
+        Helper Absolut (Staked): Memastikan elemen label dan input benar-benar 
+        selesai di-render oleh SPA reaktif sebelum dieksekusi via JS DOM Traversal.
         """
         print(f"[DEBUG] Menunggu render teks '{label_text}' di halaman...")
-        self.driver.wait_for_text(label_text, "body", timeout=25)
 
-        # Logika JS: Cari label, lalu ambil elemen input terdekat yang valid (input, textarea, select)
+        # Tambahkan sleep minimal di awal untuk memberi waktu proses rendering container reaktif
+        self.driver.sleep(1.5)
+
+        # Pastikan elemen pembungkus (atau labelnya) benar-benar ada di DOM
+        self.driver.wait_for_element(
+            f"//label[contains(., '{label_text}')]", timeout=25, by="xpath")
+
         js_script = f"""
             (function() {{
                 var xpath = "//label[contains(., '{label_text}')]";
@@ -41,7 +45,7 @@ class TestRegistration(BaseRegistrationScenario):
                 return dynamic_id
             print(
                 f"[DEBUG] JS DOM belum stabil. Retry ke-{attempt+1} untuk '{label_text}'...")
-            self.driver.sleep(1.5)
+            self.driver.sleep(2.0)
 
         raise Exception(
             f"Gagal menemukan elemen input untuk label: '{label_text}'")
