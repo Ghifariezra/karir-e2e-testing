@@ -51,10 +51,17 @@ class Karir(BaseTest):
         # 7. Submit Verifikasi
         self.test_registration.submitVerification()
         self._time.sleep(4)
+
+        # PENTING: AMBIL SCREENSHOT DULU SEBELUM ASERSI!
+        # Agar jika asersi gagal, kita tetap punya foto bukti hasil akhirnya.
+        self.test_registration.saveScreenshot("form_registration_otp_result")
+
+        # 8. Asersi Pesan Error
+        # Catatan: Jika nanti dari foto terbukti bahasa berubah, Anda bisa mengubah ini
+        # menjadi bahasa Inggris atau teks error server aktual.
         self.test_registration.assertErrorMessage(
             "Verifikasi Kode OTP Tidak Valid")
-        
-        self.test_registration.saveScreenshot("form_registration_otp_result")
+
         print("[INFO] Skenario Registrasi Happy Path & Verifikasi Selesai!")
         
     def formRegistration_Negative_XSS_Injection(self):
