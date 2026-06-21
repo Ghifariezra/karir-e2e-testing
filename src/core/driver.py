@@ -6,6 +6,7 @@ from seleniumbase import SB
 
 load_dotenv()
 
+
 class Driver(metaclass=Singleton):
     """Singleton class untuk mengelola instance SeleniumBase secara dinamis."""
 
@@ -14,9 +15,15 @@ class Driver(metaclass=Singleton):
     def __init__(self):
         is_headless = self._os.getenv("HEADLESS", "false").lower() == "true"
 
+        # Deteksi apakah berjalan di lingkungan CI/CD GitHub Actions
+        is_ci = self._os.getenv("CI", "false").lower() == "true"
+
+        # Nonaktifkan Undetected ChromeDriver (uc) pada container CI/CD Linux
+        # untuk mencegah error 'Text file busy' dan 'Permission denied' akibat konkurensi.
+        use_uc = False if is_ci else True
+
         self._sb_manager = SB(
-            # uc=True,
-            uc=False,
+            uc=use_uc,  # <--- Disetel dinamis
             chromium_arg="--ignore-certificate-errors",
             incognito=True,
             locale="id-ID",
