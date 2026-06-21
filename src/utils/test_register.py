@@ -8,35 +8,40 @@ class TestRegistration(BaseRegistrationScenario):
 
     def _get_input_css(self, label_text):
         """
-        Helper Absolut: Menggunakan mesin XPath native bawaan browser via JS.
-        Ini menembus animasi, bayangan DOM, dan mengunci target langsung di tag <label>.
+        Helper Absolut (Fixed): Menggunakan DOM Traversal via JS untuk menembus 
+        struktur Material-UI (Reaktif) dan langsung mengunci elemen <input> 
+        di bawah label terkait secara akurat tanpa bergantung pada atribut 'for'.
         """
         print(f"[DEBUG] Menunggu render teks '{label_text}' di halaman...")
-        # self.driver.wait_for_text(label_text, "body", timeout=15)
         self.driver.wait_for_text(label_text, "body", timeout=25)
 
-        # Bungkus seluruh logika di dalam (function() { ... })();
+        # Logika JS: Cari label, lalu ambil elemen input terdekat yang valid (input, textarea, select)
         js_script = f"""
             (function() {{
                 var xpath = "//label[contains(., '{label_text}')]";
                 var label = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 
-                if (label && label.hasAttribute('for')) {{
-                    return '#' + label.getAttribute('for');
+                if (label) {{
+                    // Navigasi ke elemen parent/wrapper, lalu cari tag input di dalamnya
+                    var container = label.closest('.MuiFormControl-root, .MuiTextField-root, div');
+                    if (container) {{
+                        var input = container.querySelector('input, textarea, select');
+                        if (input && input.id) {{
+                            return '#' + input.id;
+                        }}
+                    }}
                 }}
                 return null;
             }})();
         """
 
         dynamic_id = None
-        # for attempt in range(3):
         for attempt in range(5):
             dynamic_id = self.driver.execute_script(js_script)
             if dynamic_id:
                 return dynamic_id
             print(
                 f"[DEBUG] JS DOM belum stabil. Retry ke-{attempt+1} untuk '{label_text}'...")
-            # self.driver.sleep(1)
             self.driver.sleep(1.5)
 
         raise Exception(
