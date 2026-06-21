@@ -8,13 +8,14 @@ class TestRegistration(BaseRegistrationScenario):
 
     def _get_input_css(self, label_text):
         """
-        Helper Absolut: Menggunakan mesin XPath native bawaan browser via JS.
-        Ini menembus animasi, bayangan DOM, dan mengunci target langsung di tag <label>.
+        Helper Absolut (Fixed): Menggunakan DOM Traversal via JS untuk menembus 
+        struktur Material-UI (Reaktif) dan langsung mengunci elemen <input> 
+        di bawah label terkait secara akurat tanpa bergantung pada atribut 'for'.
         """
         print(f"[DEBUG] Menunggu render teks '{label_text}' di halaman...")
         self.driver.wait_for_text(label_text, "body", timeout=25)
 
-        # Logika JS: Cari label, lalu ambil elemen input terdekat yang valid (input, textarea)
+        # Logika JS: Cari label, lalu ambil elemen input terdekat yang valid (input, textarea, select)
         js_script = f"""
             (function() {{
                 var xpath = "//label[contains(., '{label_text}')]";
@@ -34,7 +35,6 @@ class TestRegistration(BaseRegistrationScenario):
         """
 
         dynamic_id = None
-        # Perluas percobaan pengambilan ID dari 3 menjadi 5 kali
         for attempt in range(5):
             dynamic_id = self.driver.execute_script(js_script)
             if dynamic_id:
