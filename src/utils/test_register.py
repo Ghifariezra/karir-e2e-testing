@@ -252,8 +252,9 @@ class TestRegistration(BaseRegistrationScenario):
             self.driver.sleep(0.5)
 
             element = self.driver.find_element(target_selector)
+            
             # Menyimpan gambar dengan nama dinamis yang dikirimkan dari parameter
-            element.save_screenshot(
+            element.screenshot(
                 f"public/screenshots/registration/{filename}_element.png")
             print(
                 f"[INFO] Screenshot elemen {filename}_element.png berhasil diambil.")
