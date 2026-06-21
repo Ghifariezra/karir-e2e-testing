@@ -50,9 +50,6 @@ class Karir(BaseTest):
 
         # 7. Submit Verifikasi
         self.test_registration.submitVerification()
-
-        # 8. Screenshot Hasil Akhir Verifikasi
-        self._time.sleep(3)  # Tunggu loading validasi API
         
         self.test_registration.assertErrorMessage(
             "Verifikasi Kode OTP Tidak Valid")
