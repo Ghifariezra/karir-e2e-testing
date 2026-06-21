@@ -15,8 +15,14 @@ class Driver(metaclass=Singleton):
     def __init__(self):
         is_headless = self._os.getenv("HEADLESS", "false").lower() == "true"
 
+        # Cek apakah sedang berjalan di server GitHub Actions (CI/CD environment)
+        # Jika ya, nonaktifkan 'uc=True' untuk mencegah konflik Text file busy pada ChromeDriver
+        is_ci = self._os.getenv("CI", "false").lower() == "true"
+
+        use_uc = False if is_ci else True
+
         self._sb_manager = SB(
-            uc=True,
+            uc=use_uc,  # <--- Diubah menjadi dinamis mengikuti variabel CI
             chromium_arg="--ignore-certificate-errors",
             incognito=True,
             locale="id-ID",
