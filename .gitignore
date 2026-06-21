@@ -1,0 +1,32 @@
+# --- Lingkungan Virtual & Python ---
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Berkas Konfigurasi & Sensitif ---
+.env
+.pytest_cache/
+
+# --- Laporan Pengujian (Pytest) ---
+report.html
+last_report.html
+
+# --- Direktori Output Portofolio / Hasil Test ---
+# Mengabaikan cache logs dan unduhan lokal agar tidak membebani Git
+downloaded_files/
+
+# Mengabaikan screenshot biner yang sifatnya sementara (hasil test lokal)
+public/screenshots/login/*
+public/screenshots/registration/*
+!public/screenshots/.gitkeep
+
+# --- Kompresi / Arsip (Opsional) ---
+*.zip
+*.tar.gz
+
+# --- File Commit ---
+commits/
