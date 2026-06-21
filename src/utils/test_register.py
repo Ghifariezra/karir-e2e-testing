@@ -8,73 +8,139 @@ class TestRegistration(BaseRegistrationScenario):
 
     def _get_input_css(self, label_text):
         """
-        Helper Absolut (Staked): Memastikan elemen label dan input benar-benar 
-        selesai di-render oleh SPA reaktif sebelum dieksekusi via JS DOM Traversal.
+        Helper yang robust: cari input via label, dengan fallback bertingkat.
+        Mendukung input MUI yang tidak punya 'id'.
         """
         print(f"[DEBUG] Menunggu render teks '{label_text}' di halaman...")
-
-        # Tambahkan sleep minimal di awal untuk memberi waktu proses rendering container reaktif
         self.driver.sleep(1.5)
 
-        # Pastikan elemen pembungkus (atau labelnya) benar-benar ada di DOM
-        self.driver.wait_for_element(
-            f"//label[contains(., '{label_text}')]", timeout=25, by="xpath")
+        label_xpath = f"//label[contains(., '{label_text}')]"
+
+        # Pastikan label ada dulu di DOM
+        self.driver.wait_for_element(label_xpath, timeout=25, by="xpath")
 
         js_script = f"""
             (function() {{
                 var xpath = "//label[contains(., '{label_text}')]";
-                var label = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                
-                if (label) {{
-                    var container = label.closest('.MuiFormControl-root, .MuiTextField-root, div');
-                    if (container) {{
-                        var input = container.querySelector('input, textarea, select');
-                        if (input && input.id) {{
-                            return '#' + input.id;
-                        }}
+                var label = document.evaluate(
+                    xpath, document, null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE, null
+                ).singleNodeValue;
+
+                if (!label) return null;
+
+                // Strategi 1: pakai htmlFor / for → cari by id
+                if (label.htmlFor) {{
+                    var el = document.getElementById(label.htmlFor);
+                    if (el) {{
+                        if (el.id) return '#' + el.id;
+                        // input ada tapi tidak punya id → beri id sementara
+                        el.id = 'sb_dyn_{label_text.replace(" ", "_")}';
+                        return '#' + el.id;
                     }}
                 }}
+
+                // Strategi 2: cari input di dalam container MUI terdekat
+                var container = label.closest(
+                    '.MuiFormControl-root, .MuiTextField-root, .MuiInputBase-root'
+                );
+                if (!container) {{
+                    // Strategi 3: naik ke parent div lalu cari input di dalamnya
+                    container = label.parentElement;
+                    while (container && container.tagName !== 'FORM') {{
+                        var input = container.querySelector('input, textarea');
+                        if (input) {{
+                            if (!input.id) {{
+                                input.id = 'sb_dyn_{label_text.replace(" ", "_")}';
+                            }}
+                            return '#' + input.id;
+                        }}
+                        container = container.parentElement;
+                    }}
+                    return null;
+                }}
+
+                var input = container.querySelector('input, textarea, select');
+                if (input) {{
+                    if (!input.id) {{
+                        input.id = 'sb_dyn_{label_text.replace(" ", "_")}';
+                    }}
+                    return '#' + input.id;
+                }}
+
                 return null;
             }})();
         """
 
-        dynamic_id = None
         for attempt in range(5):
             dynamic_id = self.driver.execute_script(js_script)
             if dynamic_id:
+                print(
+                    f"[DEBUG] Selector ditemukan: '{dynamic_id}' untuk '{label_text}'")
                 return dynamic_id
             print(
                 f"[DEBUG] JS DOM belum stabil. Retry ke-{attempt+1} untuk '{label_text}'...")
             self.driver.sleep(2.0)
 
+        # ── Fallback terakhir: gunakan XPath langsung via SeleniumBase ──────────
+        # Ini menghindari kebutuhan CSS id sama sekali
+        fallback_xpath = (
+            f"//label[contains(., '{label_text}')]"
+            f"/following-sibling::div//input | "
+            f"//label[contains(., '{label_text}')]"
+            f"/..//input"
+        )
+        try:
+            self.driver.wait_for_element(fallback_xpath, timeout=10, by="xpath")
+            print(f"[DEBUG] Fallback XPath berhasil untuk '{label_text}'")
+            return fallback_xpath  # ← return XPath string, bukan CSS
+        except Exception:
+            pass
+
         raise Exception(
             f"Gagal menemukan elemen input untuk label: '{label_text}'")
 
+    def _type_by_label(self, label_text, value):
+        """Ketik nilai ke input yang ditemukan via label. Handle CSS dan XPath."""
+        selector = self._get_input_css(label_text)
+        if selector.startswith("//") or selector.startswith("(//"):
+            self.driver.type(selector, value, by="xpath")
+        else:
+            self.driver.type(selector, value)
+
+
+    def _click_by_label(self, label_text):
+        """Klik input yang ditemukan via label."""
+        selector = self._get_input_css(label_text)
+        if selector.startswith("//") or selector.startswith("(//"):
+            self.driver.click(selector, by="xpath")
+        else:
+            self.driver.click(selector)
+
+
     def testFullName(self, name_input="Test User"):
         print(f"[DEBUG] Mengisi Nama Lengkap: {name_input}")
-        css_name = self._get_input_css("Nama Lengkap")
-        self.driver.type(css_name, name_input)
+        self._type_by_label("Nama Lengkap", name_input)
+
 
     def testEmail(self, email_input="testuser@example.com"):
         print(f"[DEBUG] Mengisi Email: {email_input}")
-        css_email = self._get_input_css("Email")
-        self.driver.type(css_email, email_input)
+        self._type_by_label("Email", email_input)
+
 
     def testPhoneNumber(self, phone_input="081234567890"):
         print(f"[DEBUG] Mengisi Nomor Ponsel: {phone_input}")
-        css_phone = self._get_input_css("Nomor Ponsel")
-        self.driver.type(css_phone, phone_input)
+        self._type_by_label("Nomor Ponsel", phone_input)
+
 
     def testPassword(self, password_input="ValidPass123!"):
         print("[DEBUG] Mengisi Password")
-        # Catatan: Akan cocok dengan "Password" pertama yang ditemukan (bukan Konfirmasi)
-        css_password = self._get_input_css("Password")
-        self.driver.type(css_password, password_input)
+        self._type_by_label("Password", password_input)
+
 
     def testPasswordConfirmation(self, confirm_input="ValidPass123!"):
         print("[DEBUG] Mengisi Konfirmasi Password")
-        css_confirm = self._get_input_css("Konfirmasi Password")
-        self.driver.type(css_confirm, confirm_input)
+        self._type_by_label("Konfirmasi Password", confirm_input)
 
     def submitForm(self):
         print("[DEBUG] Menekan tombol Lanjutkan")
@@ -83,18 +149,9 @@ class TestRegistration(BaseRegistrationScenario):
         self.driver.click('button:contains("Lanjutkan")')
         
     def triggerBlurValidation(self, label_text):
-        """
-        Meniru perilaku manusia: Mengeklik kolom input, lalu mengeklik area kosong 
-        untuk memicu validasi real-time (onBlur) tanpa menekan submit.
-        """
         print(f"[DEBUG] Memicu validasi onBlur untuk: {label_text}")
-        css_selector = self._get_input_css(label_text)
-
-        # 1. Klik ke dalam kolom input
-        self.driver.click(css_selector)
-        self.driver.sleep(0.5)  # Jeda animasi UI
-
-        # 2. Klik elemen netral (seperti judul "Buat Akun") untuk menghilangkan fokus
+        self._click_by_label(label_text)
+        self.driver.sleep(0.5)
         self.driver.click('p:contains("Buat Akun")')
         self.driver.sleep(0.5)
 
