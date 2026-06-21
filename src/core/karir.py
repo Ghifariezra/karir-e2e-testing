@@ -45,30 +45,27 @@ class Karir(BaseTest):
         # 5. Validation Verifikasi Kode
         self.test_registration.saveScreenshot("form_registration_otp_step")
         
+
         # 6. Eksekusi Pengisian Kode Verifikasi
         self.test_registration.inputVerificationCode("123456")
 
         # 7. Submit Verifikasi
         self.test_registration.submitVerification()
-        self._time.sleep(4)
 
-        # 8. Asersi & Tangkapan Layar Super Cepat
+        # Tambah sleep lebih panjang — CI perlu waktu round-trip ke server OTP
+        self._time.sleep(5)
+        print("[DEBUG] Menunggu response server OTP...")
+
+        # 8. Asersi
         try:
-            # SeleniumBase akan langsung memantau DOM.
-            # Begitu teks muncul di detik ke-1, ia langsung menangkapnya tanpa menunggu detik ke-25!
             self.test_registration.assertErrorMessage(
                 "Verifikasi Kode OTP Tidak Valid")
-
-            # Jika teks ketemu, ambil foto saat teks tersebut masih terpampang jelas di layar
             self.test_registration.saveScreenshot(
                 "form_registration_otp_result_sukses")
             print("[INFO] Skenario Registrasi Happy Path & Verifikasi Selesai!")
-
         except Exception as e:
-            # Jika dalam 25 detik teks benar-benar tidak muncul, foto layarnya untuk diinvestigasi
-            self.test_registration.saveScreenshot(
-                "form_registration_otp_result_gagal")
-            print("[ERROR] Asersi gagal, silakan cek gambar 'form_registration_otp_result_gagal_element.png' di Artifact GitHub!")
+            self.test_registration.saveScreenshot("form_registration_otp_result_gagal")
+            print("[ERROR] Asersi gagal, silakan cek screenshot di Artifact GitHub!")
             raise e
         
     def formRegistration_Negative_XSS_Injection(self):

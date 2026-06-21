@@ -162,14 +162,22 @@ class TestRegistration(BaseRegistrationScenario):
         self.driver.assert_element('button[disabled]:contains("Lanjutkan")')
 
     def assertErrorMessage(self, expected_text):
-        """
-        Helper untuk Negative Test: 
-        Memastikan pesan error validasi muncul di layar.
-        """
         print(f"[DEBUG] Memvalidasi kemunculan error: '{expected_text}'")
-        # Di Material-UI, pesan error biasanya menggunakan class Mui-error
-        # Tambahkan timeout 20 detik untuk mengantisipasi latensi respons API di cloud
-        self.driver.wait_for_text_visible(expected_text, timeout=25)
+
+        # Gunakan XPath dengan normalize-space agar tidak gagal karena whitespace
+        xpath = f"//*[contains(normalize-space(.), '{expected_text}')]"
+
+        try:
+            self.driver.wait_for_element_visible(xpath, by="xpath", timeout=30)
+            print(f"[INFO] Error message ditemukan: '{expected_text}'")
+        except Exception:
+            # Debug: cetak konten body untuk investigasi
+            try:
+                body_text = self.driver.get_text("body")
+                print(f"[DEBUG] Konten body (500 char):\n{body_text[:500]}")
+            except Exception:
+                print("[DEBUG] Gagal membaca body text")
+            raise
         
     def clickEmailVerification(self):
         """
@@ -206,36 +214,38 @@ class TestRegistration(BaseRegistrationScenario):
                 raise fallback_error
             
     def inputVerificationCode(self, code="123456"):
-        """
-        Helper untuk mengisi 6 digit kode OTP ke dalam kotak input berjejer.
-        Memanfaatkan atribut aria-label bawaan komponen untuk akurasi absolut.
-        """
         print(f"[DEBUG] Mengisi kode verifikasi OTP: {code}")
 
-        # 1. Pastikan DOM untuk form OTP sudah ter-render sempurna
-        # Kita tunggu elemen dengan aria-label yang mengandung kata 'Digit 1'
+        # Tunggu digit pertama siap
         self.driver.wait_for_element(
-            "input[aria-label*='Digit 1']", timeout=15)
+            "input[aria-label*='Digit 1']", timeout=20)
 
-        # 2. Lakukan iterasi (perulangan) untuk mengetik setiap digit ke kotaknya masing-masing
+        # Tambah jeda — CI butuh waktu render lebih lama
+        self.driver.sleep(1.5)
+
         for i, digit in enumerate(code):
-            # Selector dinamis: input[aria-label*='Digit 1'], input[aria-label*='Digit 2'], dst.
-            # Menggunakan *= (contains) karena Digit 1 teksnya sedikit berbeda: "Please enter... Digit 1"
             box_selector = f"input[aria-label*='Digit {i+1}']"
 
+            # Pastikan setiap kotak visible sebelum diketik
+            self.driver.wait_for_element_visible(box_selector, timeout=10)
             self.driver.type(box_selector, digit)
-            # Jeda natural (200ms) memberi waktu state React ter-update
-            self.driver.sleep(0.2)
+
+            # Naikkan jeda antar digit — CI butuh lebih lama untuk React state update
+            self.driver.sleep(0.5)
+
+        print("[DEBUG] Semua digit OTP berhasil diisi")
+        # Jeda final setelah digit terakhir — tunggu tombol Verifikasi jadi enabled
+        self.driver.sleep(2)
 
     def submitVerification(self):
-        """
-        Mengeklik tombol Verifikasi setelah form OTP terisi penuh.
-        """
         print("[DEBUG] Menekan tombol Verifikasi OTP")
 
-        # Secara bawaan, SeleniumBase akan secara pintar menunggu (*auto-wait*)
-        # sampai atribut 'disabled' pada tombol menghilang sebelum mengekliknya.
+        # Tunggu tombol TIDAK disabled dulu sebelum diklik
+        self.driver.wait_for_element(
+            'button:contains("Verifikasi"):not([disabled])', timeout=15)
+
         self.driver.click('button:contains("Verifikasi")')
+        print("[DEBUG] Tombol Verifikasi berhasil diklik")
 
     def saveScreenshot(self, filename="screenshot.png"):
         """
