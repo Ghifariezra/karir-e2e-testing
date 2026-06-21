@@ -15,7 +15,8 @@ class Driver(metaclass=Singleton):
         is_headless = self._os.getenv("HEADLESS", "false").lower() == "true"
 
         self._sb_manager = SB(
-            uc=True,
+            # uc=True,
+            uc=False,
             chromium_arg="--ignore-certificate-errors",
             incognito=True,
             locale="id-ID",
