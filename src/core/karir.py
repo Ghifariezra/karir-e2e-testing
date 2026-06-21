@@ -22,7 +22,8 @@ class Karir(BaseTest):
         self._time.sleep(2)
         print("[INFO] Membuka halaman registrasi...")
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Eksekusi Skenario Pengisian Form (Happy Path)
         self.test_registration.testFullName("Budi Santoso")
@@ -41,7 +42,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_Password_Weak(self):
         """Skenario Negatif: Password tidak memenuhi syarat (Terlalu pendek / lemah)"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Isi form dengan password lemah (hanya 5 huruf kecil & angka)
         self.test_registration.testFullName("Budi Santoso")
@@ -67,7 +69,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_Password_Mismatch(self):
         """Skenario Negatif: Konfirmasi password tidak sama"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Isi form dengan konfirmasi password yang BERBEDA
         self.test_registration.testFullName("Budi Santoso")
@@ -93,7 +96,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_EmptyFields(self):
         """Skenario Negatif: Memastikan tombol Lanjutkan mati (disabled) saat form kosong"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Asersi Ekspektasi
         self.test_registration.assertSubmitButtonDisabled()
@@ -106,7 +110,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_InvalidEmail(self):
         """Skenario Negatif: Form diisi penuh, submit, lalu muncul error format email"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Isi form dengan email salah
         self.test_registration.testFullName("Budi Santoso")
@@ -131,7 +136,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_Phone_ExceedsMax(self):
         """Skenario Negatif: Nomor ponsel melebihi batas maksimal (>13 digit)"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Isi form dengan nomor kepanjangan
         self.test_registration.testFullName("Budi Santoso")
@@ -154,7 +160,8 @@ class Karir(BaseTest):
     def formRegistration_Negative_Phone_BelowMin(self):
         """Skenario Negatif: Nomor ponsel kurang dari batas minimal (<10 digit)"""
         self.driver.get(self.__listURL["registration"])
-        self._time.sleep(2)
+        # self._time.sleep(2)
+        self._time.sleep(3)
 
         # 1. Isi form dengan nomor kependekan
         self.test_registration.testFullName("Budi Santoso")

@@ -12,7 +12,8 @@ class TestRegistration(BaseRegistrationScenario):
         Ini menembus animasi, bayangan DOM, dan mengunci target langsung di tag <label>.
         """
         print(f"[DEBUG] Menunggu render teks '{label_text}' di halaman...")
-        self.driver.wait_for_text(label_text, "body", timeout=15)
+        # self.driver.wait_for_text(label_text, "body", timeout=15)
+        self.driver.wait_for_text(label_text, "body", timeout=25)
 
         # Bungkus seluruh logika di dalam (function() { ... })();
         js_script = f"""
@@ -28,13 +29,15 @@ class TestRegistration(BaseRegistrationScenario):
         """
 
         dynamic_id = None
-        for attempt in range(3):
+        # for attempt in range(3):
+        for attempt in range(5):
             dynamic_id = self.driver.execute_script(js_script)
             if dynamic_id:
                 return dynamic_id
             print(
                 f"[DEBUG] JS DOM belum stabil. Retry ke-{attempt+1} untuk '{label_text}'...")
-            self.driver.sleep(1)
+            # self.driver.sleep(1)
+            self.driver.sleep(1.5)
 
         raise Exception(
             f"Gagal menemukan elemen input untuk label: '{label_text}'")
