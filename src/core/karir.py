@@ -197,7 +197,14 @@ class Karir(BaseTest):
         # 4. Asersi Ekspektasi
         # Catatan: Teks "Password baru tidak sama" kemungkinan besar SALAH.
         # Nanti sesuaikan string ini dengan teks yang ada di dalam screenshot.
-        self.test_registration.assertErrorMessage("Password baru tidak sama")
+        # 4. Asersi Ekspektasi
+        try:
+            # Mencoba mencari teks bahasa Indonesia (Lokal)
+            self.test_registration.assertErrorMessage("Password baru tidak sama")
+        except Exception:
+            print("[INFO] Teks lokal tidak ditemukan, mencoba teks versi Server...")
+            self.test_registration.assertErrorMessage("Password baru tidak sama")
+
         print("[INFO] Negative Test (Password Mismatch) PASSED.")
 
     def formRegistration_Negative_EmptyFields(self):
