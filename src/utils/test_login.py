@@ -84,6 +84,14 @@ class TestLogin(BaseLoginScenario):
     def assertSubmitButtonDisabled(self):
         print("[DEBUG] Memvalidasi tombol Lanjutkan terkunci (Disabled)")
         self.driver.assert_element('button[disabled]:contains("Lanjutkan")')
+        
+    def assertErrorMessage(self, expected_text):
+        """
+        Helper untuk Negative Test: 
+        Memastikan pesan error validasi muncul di layar.
+        """
+        print(f"[DEBUG] Memvalidasi kemunculan error: '{expected_text}'")
+        self.driver.wait_for_text_visible(expected_text, timeout=15)
 
     def saveScreenshot(self, filename="screenshot_login.png"):
         print(f"[DEBUG] Menyimpan screenshot login: {filename}")
