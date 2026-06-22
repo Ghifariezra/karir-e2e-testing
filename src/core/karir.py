@@ -174,36 +174,46 @@ class Karir(BaseTest):
             "form_registration_password_weak")
 
     def formRegistration_Negative_Password_Mismatch(self):
-        """Skenario Negatif: Konfirmasi password tidak sama"""
         self.driver.get(self.__listURL["registration"])
         self._time.sleep(3)
 
-        # 1. Isi form dengan konfirmasi password yang BERBEDA
         self.test_registration.testFullName("Budi Santoso")
         self.test_registration.testEmail("budi.santoso@email.com")
         self.test_registration.testPhoneNumber("081299998888")
         self.test_registration.testPassword("StrongPass123!")
         self.test_registration.testPasswordConfirmation("TypoPass123!")
 
-        # 2. Klik Lanjutkan (Ini akan memicu validasi form/onBlur)
         self.test_registration.submitForm()
         self._time.sleep(2)
-
-        # 3. AMBIL SCREENSHOT DULU! (Sebelum asersi)
-        # Agar jika gagal, kita bisa mengecek gambar di Artifact GitHub
         self.test_registration.saveScreenshot(
             "form_registration_password_mismatch")
 
-        # 4. Asersi Ekspektasi
-        # Catatan: Teks "Password baru tidak sama" kemungkinan besar SALAH.
-        # Nanti sesuaikan string ini dengan teks yang ada di dalam screenshot.
-        # 4. Asersi Ekspektasi
-        try:
-            # Mencoba mencari teks bahasa Indonesia (Lokal)
-            self.test_registration.assertErrorMessage("Password baru tidak sama")
-        except Exception:
-            print("[INFO] Teks lokal tidak ditemukan, mencoba teks versi Server...")
-            self.test_registration.assertErrorMessage("Password baru tidak sama")
+        # ← Dump dulu untuk tahu string aslinya
+        self.test_registration.dumpVisibleErrorMessages()
+
+        # Coba beberapa kemungkinan string
+        possible_errors = [
+            "Password tidak sama",
+            "Konfirmasi password tidak sesuai",
+            "Password do not match",
+            "Passwords do not match",
+            "Password baru tidak sama",
+        ]
+
+        found = False
+        for err_text in possible_errors:
+            try:
+                self.test_registration.assertErrorMessage(err_text)
+                print(f"[INFO] Error message ditemukan: '{err_text}'")
+                found = True
+                break
+            except Exception:
+                continue
+
+        if not found:
+            raise Exception(
+                "Tidak ada error message yang cocok. Cek log [DEBUG] untuk string asli."
+            )
 
         print("[INFO] Negative Test (Password Mismatch) PASSED.")
 

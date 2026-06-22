@@ -101,13 +101,70 @@ class TestRegistration(BaseRegistrationScenario):
             f"Gagal menemukan elemen input untuk label: '{label_text}'")
 
     def _type_by_label(self, label_text, value):
-        """Ketik nilai ke input yang ditemukan via label. Handle CSS dan XPath."""
+        """Ketik nilai ke input via label, dengan React-compatible event dispatch."""
         selector = self._get_input_css(label_text)
-        if selector.startswith("//") or selector.startswith("(//"):
-            self.driver.type(selector, value, by="xpath")
-        else:
-            self.driver.type(selector, value)
 
+        # Resolve elemen dulu — handle CSS dan XPath
+        if selector.startswith("//") or selector.startswith("(//"):
+            self.driver.wait_for_element_visible(selector, by="xpath", timeout=15)
+            # Klik untuk fokus
+            self.driver.click(selector, by="xpath")
+            self.driver.sleep(0.3)
+            # Jalankan via JS dengan XPath resolve dulu
+            self.driver.execute_script(f"""
+                var xpath = "{selector.split('|')[0].strip()}";
+                var input = document.evaluate(
+                    xpath, document, null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE, null
+                ).singleNodeValue;
+                if (!input) return;
+                input.focus();
+                var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype, 'value'
+                ).set;
+                nativeInputValueSetter.call(input, {repr(value)});
+                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                input.dispatchEvent(new FocusEvent('blur', {{ bubbles: true }}));
+            """)
+        else:
+            self.driver.wait_for_element_visible(selector, timeout=15)
+            self.driver.click(selector)
+            self.driver.sleep(0.3)
+            self.driver.execute_script(f"""
+                var input = document.querySelector("{selector}");
+                if (!input) return;
+                input.focus();
+                var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype, 'value'
+                ).set;
+                nativeInputValueSetter.call(input, {repr(value)});
+                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                input.dispatchEvent(new FocusEvent('blur', {{ bubbles: true }}));
+            """)
+
+        self.driver.sleep(0.4)
+        print(
+            f"[DEBUG] Berhasil mengisi '{label_text}' via nativeInputValueSetter")
+
+    def dumpVisibleErrorMessages(self):
+        """Dump semua teks error yang visible di DOM untuk debugging."""
+        result = self.driver.execute_script("""
+            var errors = [];
+            // MUI error helper text
+            var helperTexts = document.querySelectorAll(
+                'p.MuiFormHelperText-root, [class*="error"], [class*="Error"]'
+            );
+            for (var el of helperTexts) {
+                if (el.offsetParent !== null && el.textContent.trim()) {
+                    errors.push(el.textContent.trim());
+                }
+            }
+            return errors;
+        """)
+        print(f"[DEBUG] Error messages di DOM: {result}")
+        return result
 
     def _click_by_label(self, label_text):
         """Klik input yang ditemukan via label."""
