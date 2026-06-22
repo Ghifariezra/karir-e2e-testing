@@ -9,7 +9,7 @@ Proyek ini merupakan kerangka kerja otomatisasi pengujian ujung-ke-ujung (End-to
 - **Environment Manager:** `python-dotenv` & PowerShell script
 
 ## Test Scenarios Covered
-Rangkaian pengujian ini mencakup Boundary Value Testing, asersi reaktif, serta pengujian keamanan dasar (Security Testing):
+Rangkaian pengujian ini mencakup Boundary Value Testing, asersi reaktif, manipulasi DOM (Vanilla JS Injection), serta pengujian keamanan dasar (Security Testing):
 
 ### 1. Registration Form
 - **Happy Path:**
@@ -31,6 +31,16 @@ Rangkaian pengujian ini mencakup Boundary Value Testing, asersi reaktif, serta p
     - **Empty Fields:** Memastikan tombol lanjutkan terkunci (disabled) saat input kosong.
     - **Invalid Email:** Validasi format regex email yang salah pada langkah pertama login.
 
+### 3. Job Search Form
+- **Happy Path:**
+    - Pencarian presisi menggunakan parameter lengkap (Posisi/Perusahaan dan Lokasi).
+    - Pencarian parsial hanya menggunakan parameter Posisi.
+    - Pencarian parsial hanya menggunakan parameter Lokasi.
+- **Advance Filters:**
+    - Otomatisasi pembukaan modal Material-UI dan interaksi pada hidden checkbox untuk menyaring lowongan berdasarkan Tingkat Pendidikan (Sarjana S1) dan Tipe Pekerjaan (Remote).
+- **Negative:**
+    - **Empty Fields:** Eksekusi pencarian kosong tanpa menahan UI error (karena form search diizinkan kosong), melainkan memvalidasi perubahan *behavior* parameter `?keyword=` pada URL secara native.
+
 ## How to Run Locally
 
 ### Persiapan Lingkungan
@@ -49,7 +59,7 @@ Proyek ini dilengkapi dengan skrip PowerShell dinamis untuk mempermudah eksekusi
 .\scripts\run_test.ps1
 
 # ATAU jalankan secara langsung dengan parameter
-.\scripts\run_test.ps1 -Target login
+.\scripts\run_test.ps1 -Target search
 ```
 
 ## Test Report Visualization

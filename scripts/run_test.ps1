@@ -14,9 +14,10 @@ if ([string]::IsNullOrWhiteSpace($Target)) {
     Write-Host "======================================" -ForegroundColor Yellow
     Write-Host "[1] register"
     Write-Host "[2] login"
-    Write-Host "[3] all (Jalankan Keduanya)"
+    Write-Host "[3] search"
+    Write-Host "[4] all (Jalankan semua test suite)"
     Write-Host "======================================" -ForegroundColor Yellow
-    $Target = Read-Host "Masukkan pilihan Anda (register/login/all)"
+    $Target = Read-Host "Masukkan pilihan Anda (register/login/search/all)"
 }
 
 # Blok perkondisian
@@ -29,13 +30,17 @@ switch ($Target.ToLower()) {
         Write-Host "`n[INFO] Memulai Eksekusi Test Login (Parallel: 3 Workers)..." -ForegroundColor Cyan
         python -m pytest .\src\tests\test_login.py -n 3 -v --html=report.html
     }
+    "search" {
+        Write-Host "`n[INFO] Memulai Eksekusi Test Pencarian (Parallel: 5 Workers)..." -ForegroundColor Cyan
+        python -m pytest .\src\tests\test_search.py -n 5 -v --html=report.html
+    }
     "all" {
         Write-Host "`n[INFO] Memulai Eksekusi Semua Test Suite..." -ForegroundColor Cyan
         # Menjalankan spesifik kedua file test agar terpusat di satu laporan
-        python -m pytest .\src\tests\test_registration.py .\src\tests\test_login.py -n 5 -v --html=report.html
+        python -m pytest .\src\tests\test_registration.py .\src\tests\test_login.py .\src\tests\test_search.py -n 5 -v --html=report.html
     }
     default {
-        Write-Host "`n[ERROR] Input tidak valid! Silakan masukkan 'register' atau 'login'." -ForegroundColor Red
+        Write-Host "`n[ERROR] Input tidak valid! Silakan masukkan 'register' atau 'login' atau 'search' atau 'all'." -ForegroundColor Red
         exit 1
     }
 }

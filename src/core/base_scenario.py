@@ -31,11 +31,26 @@ class BaseRegistrationScenario(ABC):
     @abstractmethod
     def testPhoneNumber(self):
         pass
-    
+
 
 class BaseJobScenario(ABC):
     @abstractmethod
-    def testSearchJob(self): pass
+    def testSearchJob(self):
+        pass
 
     @abstractmethod
-    def testApplyJob(self): pass
+    def testKeyword(self):
+        pass
+    
+    @abstractmethod
+    def testLocation(self):
+        pass
+    
+    @abstractmethod
+    def clickSearchButton(self):
+        pass
+    
+class BaseApplyJobScenario(ABC):
+    @abstractmethod
+    def testApplyJob(self):
+        pass

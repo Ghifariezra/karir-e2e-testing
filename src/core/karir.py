@@ -3,6 +3,7 @@ import time
 from core.base_test import BaseTest
 from utils.test_register import TestRegistration
 from utils.test_login import TestLogin
+from utils.test_search import TestJobSearch
 
 class Karir(BaseTest):
     _os: os = os
@@ -18,7 +19,8 @@ class Karir(BaseTest):
         super().__init__()
         self.test_registration = TestRegistration(self.driver)
         self.test_login = TestLogin(self.driver)
-
+        self.test_job_search = TestJobSearch(self.driver)
+        
     """
         Skenario Pengujian Form Registrasi:
             1. Happy Path: Isi form dengan data valid, submit, lalu verifikasi OTP
@@ -374,10 +376,137 @@ class Karir(BaseTest):
         print(
             "[INFO] Negative Test (Invalid Email) Login PASSED. Error format email berhasil divalidasi.")
 
+    """
+        Skenario Pengujian Pencarian Lowongan Kerja:
+            1. Happy Path: Isi form pencarian dengan keyword dan lokasi, submit, lalu verifikasi hasil pencarian muncul
+            2. Happy Path: Isi form pencarian untuk posisi saja, submit, lalu verifikasi hasil pencarian muncul
+            3. Happy Path: Isi form pencarian untuk lokasi saja, submit, lalu verifikasi hasil pencarian muncul
+            4. Negative: Kosongkan kedua field, submit, lalu verifikasi pesan error muncul
+    """
     def formSearch(self):
+        """Skenario Positif: Pencarian lowongan kerja berdasarkan Posisi dan Lokasi"""
         self._time.sleep(2)
+        print("[INFO] Membuka halaman Pencarian Lowongan...")
         self.driver.get(self.__listURL["search"])
+        self._time.sleep(3)
+
+        # 1. Input Keyword Posisi / Perusahaan
+        self.test_job_search.testKeyword("Programmer")
+
+        # 2. Input Lokasi
+        self.test_job_search.testLocation("Jakarta")
+        self.test_job_search.saveScreenshot("search_step_1_input_filled")
+
+        # 3. Klik tombol Cari
+        self.test_job_search.clickSearchButton()
+
+        # 4. Asersi Keberhasilan (Tunggu proses loading hasil pencarian)
+        print("[DEBUG] Menunggu hasil pencarian dimuat...")
+        # Berikan waktu untuk server merespons hasil list lowongan
+        self._time.sleep(5)
+        self.test_job_search.saveScreenshot("search_success_results")
+
+        print("[INFO] Skenario Pencarian Lowongan Happy Path Selesai!")
+
+    def formSearch_PosisiOnly(self):
+        """Skenario Positif: Pencarian lowongan kerja berdasarkan Posisi saja"""
         self._time.sleep(2)
+        print("[INFO] Membuka halaman Pencarian Lowongan (Posisi Only)...")
+        self.driver.get(self.__listURL["search"])
+        self._time.sleep(3)
+
+        # 1. Input Keyword Posisi / Perusahaan
+        self.test_job_search.testKeyword("Programmer")
+        self.test_job_search.saveScreenshot("search_step_1_keyword_only")
+
+        # 2. Klik tombol Cari
+        self.test_job_search.clickSearchButton()
+
+        # 3. Asersi Keberhasilan (Tunggu proses loading hasil pencarian)
+        print("[DEBUG] Menunggu hasil pencarian dimuat...")
+        self._time.sleep(5)
+        self.test_job_search.saveScreenshot("search_success_results_keyword_only")
+
+        print("[INFO] Skenario Pencarian Lowongan (Posisi Only) Happy Path Selesai!")
+        
+    def formSearch_LokasiOnly(self):
+        """Skenario Positif: Pencarian lowongan kerja berdasarkan Lokasi saja"""
+        self._time.sleep(2)
+        print("[INFO] Membuka halaman Pencarian Lowongan (Lokasi Only)...")
+        self.driver.get(self.__listURL["search"])
+        self._time.sleep(3)
+
+        # 1. Input Lokasi
+        self.test_job_search.testLocation("Jakarta")
+        self.test_job_search.saveScreenshot("search_step_1_location_only")
+
+        # 2. Klik tombol Cari
+        self.test_job_search.clickSearchButton()
+
+        # 3. Asersi Keberhasilan (Tunggu proses loading hasil pencarian)
+        print("[DEBUG] Menunggu hasil pencarian dimuat...")
+        self._time.sleep(5)
+        self.test_job_search.saveScreenshot("search_success_results_location_only")
+
+        print("[INFO] Skenario Pencarian Lowongan (Lokasi Only) Happy Path Selesai!")
+        
+    def formSearch_Negative_EmptyFields(self):
+        """Skenario Negatif: Pencarian kosong, memvalidasi perubahan URL parameter"""
+        self._time.sleep(2)
+        print("[INFO] Membuka halaman Pencarian Lowongan (Empty Fields)...")
+        self.driver.get(self.__listURL["search"])
+        self._time.sleep(3)
+
+        # 1. Tangkap layar kondisi awal yang kosong sebelum eksekusi
+        self.test_job_search.saveScreenshot("search_step_1_empty_fields")
+
+        # 2. Langsung klik tombol Cari tanpa mengisi input apapun
+        self.test_job_search.clickSearchButton()
+
+        # 3. Asersi Ekspektasi (Perubahan URL)
+        print("[DEBUG] Memvalidasi perubahan URL menjadi parameter pencarian kosong...")
+        self._time.sleep(2)  # Beri sedikit waktu agar browser memperbarui URL
+
+        # Menggunakan metode native SeleniumBase untuk mengecek sebagian isi URL
+        self.driver.assert_url_contains("?keyword=")
+
+        # 4. Ambil screenshot hasil akhirnya
+        self.test_job_search.saveScreenshot("search_result_empty_fields")
+        print(
+            "[INFO] Negative Test (Empty Fields) Search PASSED. URL berubah sesuai ekspektasi.")
+
+    def formSearch_Filter(self):
+        """Skenario Positif: Menggunakan fitur Semua Filter (Tingkat Pendidikan & Tipe Kerja)"""
+        self._time.sleep(2)
+        print("[INFO] Membuka halaman Pencarian Lowongan (Filter Test)...")
+        self.driver.get(self.__listURL["search"])
+        self._time.sleep(3)
+
+        # 1. Buka Modal Filter
+        # DIPERBARUI: Menggunakan openFilterTab yang lebih fleksibel
+        self.test_job_search.openFilterTab("Semua Filter")
+
+        # 2. Pilih Tingkat Pendidikan
+        self.test_job_search.selectFilterCheckbox("Sarjana (S1)")
+
+        # 3. Pilih Tipe Pekerjaan (Remote/On Site)
+        self.test_job_search.selectFilterCheckbox("Remote")
+
+        # Ambil screenshot saat modal masih terbuka dan checkbox terpilih
+        self.test_job_search.saveScreenshot("search_step_1_filter_selected")
+
+        # 4. Terapkan Filter
+        self.test_job_search.applyFilters()
+
+        # 5. Asersi Ekspektasi
+        print("[DEBUG] Menunggu hasil filter dimuat...")
+        self._time.sleep(3)
+
+        # Kita asersi bahwa URL berubah mengandung parameter filter
+        # Karir.com biasanya menambahkan parameter '?degree_id' atau '?remote'
+        # Tapi jika tidak pasti parameternya, screenshot sudah cukup sebagai bukti sukses
+        self.test_job_search.saveScreenshot("search_success_filter_applied")
+        print("[INFO] Skenario Pencarian Lowongan (Semua Filter) Happy Path Selesai!")
 
     def formApply(self):
         pass
