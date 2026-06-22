@@ -163,21 +163,9 @@ class TestRegistration(BaseRegistrationScenario):
 
     def assertErrorMessage(self, expected_text):
         print(f"[DEBUG] Memvalidasi kemunculan error: '{expected_text}'")
-
-        # Gunakan XPath dengan normalize-space agar tidak gagal karena whitespace
-        xpath = f"//*[contains(normalize-space(.), '{expected_text}')]"
-
-        try:
-            self.driver.wait_for_element_visible(xpath, by="xpath", timeout=30)
-            print(f"[INFO] Error message ditemukan: '{expected_text}'")
-        except Exception:
-            # Debug: cetak konten body untuk investigasi
-            try:
-                body_text = self.driver.get_text("body")
-                print(f"[DEBUG] Konten body (500 char):\n{body_text[:500]}")
-            except Exception:
-                print("[DEBUG] Gagal membaca body text")
-            raise
+        # wait_for_text_visible otomatis menangani shadow DOM dan pemisahan span di Material-UI
+        self.driver.wait_for_text_visible(expected_text, timeout=15)
+        print(f"[INFO] Error message ditemukan: '{expected_text}'")
         
     def clickEmailVerification(self):
         """

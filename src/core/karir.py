@@ -176,7 +176,6 @@ class Karir(BaseTest):
     def formRegistration_Negative_Password_Mismatch(self):
         """Skenario Negatif: Konfirmasi password tidak sama"""
         self.driver.get(self.__listURL["registration"])
-        # self._time.sleep(2)
         self._time.sleep(3)
 
         # 1. Isi form dengan konfirmasi password yang BERBEDA
@@ -186,19 +185,20 @@ class Karir(BaseTest):
         self.test_registration.testPassword("StrongPass123!")
         self.test_registration.testPasswordConfirmation("TypoPass123!")
 
-        # 2. Klik Lanjutkan
+        # 2. Klik Lanjutkan (Ini akan memicu validasi form/onBlur)
         self.test_registration.submitForm()
-        self._time.sleep(1)
+        self._time.sleep(2)
 
-        # 3. Asersi Ekspektasi
-        # Sesuaikan string ini dengan pesan error aktual yang muncul di web Karir.com
-        self.test_registration.assertErrorMessage(
-            "Password baru tidak sama")
-        print("[INFO] Negative Test (Password Mismatch) PASSED.")
-
-        # 4. Ambil Screenshot
+        # 3. AMBIL SCREENSHOT DULU! (Sebelum asersi)
+        # Agar jika gagal, kita bisa mengecek gambar di Artifact GitHub
         self.test_registration.saveScreenshot(
             "form_registration_password_mismatch")
+
+        # 4. Asersi Ekspektasi
+        # Catatan: Teks "Password baru tidak sama" kemungkinan besar SALAH.
+        # Nanti sesuaikan string ini dengan teks yang ada di dalam screenshot.
+        self.test_registration.assertErrorMessage("Password baru tidak sama")
+        print("[INFO] Negative Test (Password Mismatch) PASSED.")
 
     def formRegistration_Negative_EmptyFields(self):
         """Skenario Negatif: Memastikan tombol Lanjutkan mati (disabled) saat form kosong"""
