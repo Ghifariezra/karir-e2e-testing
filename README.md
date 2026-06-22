@@ -8,38 +8,30 @@ Proyek ini merupakan kerangka kerja otomatisasi pengujian ujung-ke-ujung (End-to
 - **Parallel Execution:** `pytest-xdist`
 - **Environment Manager:** `python-dotenv` & PowerShell script
 
-## Test Scenarios Covered
-Rangkaian pengujian ini mencakup Boundary Value Testing, asersi reaktif, manipulasi DOM (Vanilla JS Injection), serta pengujian keamanan dasar (Security Testing):
+## Assumed Business Rules & Test Scenarios
+Karena pengujian ini bersifat *Black-Box Testing* yang dieksekusi tanpa dokumen *Product Requirements Document* (PRD) internal, skenario di bawah ini dirancang berdasarkan *reverse-engineering* terhadap *behavior* aktual antarmuka pengguna Karir.com. Rangkaian pengujian mencakup *Boundary Value Testing*, asersi reaktif, manipulasi DOM (Vanilla JS Injection), serta *Security Testing*.
 
-### 1. Registration Form
-- **Happy Path:**
-    - Pendaftaran akun dengan data valid (termasuk Strong Password).
-    - Pemilihan metode verifikasi (melalui Email).
-    - Eksekusi pengisian dinamis 6-digit kode OTP dan penyelesaian verifikasi.
-- **Negative & Security:**
-    - **XSS Injection (Security):** Menguji kerentanan form terhadap injeksi payload skrip berbahaya (Cross-Site Scripting) dan memastikan tidak ada DOM alert yang tereksekusi.
-    - **Empty Fields:** Memastikan tombol submit terkunci (disabled) saat kolom kosong.
-    - **Invalid Email:** Validasi regex format email setelah klik submit.
-    - **Boundary Phone:** Validasi batas minimal (10 digit) dan maksimal (13 digit) nomor ponsel.
-    - **Password Weak:** Asersi penolakan sistem terhadap kata sandi yang terlalu pendek (Too Short).
-    - **Password Mismatch:** Validasi asersi ketidakcocokan antara kolom Password dan Konfirmasi Password.
+### Test Scenario Matrix
 
-### 2. Login Form
-- **Happy Path:**
-    - Pengujian alur login multi-langkah (Email -> Password) dengan kredensial valid.
-- **Negative:**
-    - **Empty Fields:** Memastikan tombol lanjutkan terkunci (disabled) saat input kosong.
-    - **Invalid Email:** Validasi format regex email yang salah pada langkah pertama login.
-
-### 3. Job Search Form
-- **Happy Path:**
-    - Pencarian presisi menggunakan parameter lengkap (Posisi/Perusahaan dan Lokasi).
-    - Pencarian parsial hanya menggunakan parameter Posisi.
-    - Pencarian parsial hanya menggunakan parameter Lokasi.
-- **Advance Filters:**
-    - Otomatisasi pembukaan modal Material-UI dan interaksi pada hidden checkbox untuk menyaring lowongan berdasarkan Tingkat Pendidikan (Sarjana S1) dan Tipe Pekerjaan (Remote).
-- **Negative:**
-    - **Empty Fields:** Eksekusi pencarian kosong tanpa menahan UI error (karena form search diizinkan kosong), melainkan memvalidasi perubahan *behavior* parameter `?keyword=` pada URL secara native.
+| Modul / Halaman | Skenario | Tipe Uji | Ekspektasi Hasil (Assertion) |
+| :--- | :--- | :--- | :--- |
+| **Registration Form** | Pendaftaran dengan data valid & Strong Password | Happy Path | Form berhasil dikirim, lanjut ke tahap verifikasi Email. |
+| | Input & Submit Kode OTP Verifikasi | Happy Path | OTP tervalidasi oleh sistem. |
+| | Injeksi payload berbahaya (XSS) pada input | Security | Payload dinetralisir (*sanitized*); tidak ada eksekusi *alert* DOM JS. |
+| | Mengosongkan form (Empty Fields) | Negative | Tombol *Submit* tetap dalam keadaan *disabled*. |
+| | Input format Email yang salah | Negative | Muncul pesan error validasi regex UI: "Format email belum sesuai". |
+| | Input Nomor Ponsel di bawah 10 digit | Negative (Boundary) | Muncul pesan error: "Minimal 10 digit". |
+| | Input Nomor Ponsel di atas 13 digit | Negative (Boundary) | Muncul pesan error: "Maksimal 13 digit". |
+| | Input Kata Sandi lemah (< 8 karakter) | Negative | Muncul pesan error: "Too Short". |
+| | Konfirmasi Kata Sandi tidak sama | Negative | Muncul pesan ketidakcocokan (*mismatch error*) yang relevan. |
+| **Login Form** | Login multi-langkah dengan kredensial valid | Happy Path | Autentikasi sukses, masuk ke halaman *Dashboard* pengguna. |
+| | Mengosongkan form (Empty Fields) | Negative | Tombol *Lanjutkan* tetap dalam keadaan *disabled*. |
+| | Input format Email yang salah di langkah awal | Negative | Muncul pesan error: "Format email harus seperti email@karir.com." |
+| **Job Search Form** | Pencarian presisi (Posisi/Perusahaan + Lokasi) | Happy Path | Daftar lowongan dirender sesuai dengan kedua parameter. |
+| | Pencarian parsial (Hanya Posisi/Perusahaan) | Happy Path | Daftar lowongan dirender sesuai kata kunci posisi terkait. |
+| | Pencarian parsial (Hanya Lokasi) | Happy Path | Daftar lowongan dirender sesuai kata kunci lokasi terkait. |
+| | Manipulasi Modal Filter (S1 & Remote) | Advance / Happy Path | DOM berhasil dimanipulasi; pencarian mematuhi aturan filter. |
+| | Eksekusi Pencarian Kosong (Edge Case) | Negative | UI tidak *crash*; URL termodifikasi natif dengan parameter `?keyword=`. |
 
 ## How to Run Locally
 
