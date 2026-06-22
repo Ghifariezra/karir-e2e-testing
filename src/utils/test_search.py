@@ -63,13 +63,10 @@ class TestJobSearch(BaseJobScenario):
     def openFilterTab(self, tab_name="Semua Filter"):
         print(f"[DEBUG] Membuka tab filter: '{tab_name}'...")
 
-        # Cari semua <p> dengan class css-mem2yx, klik parent-nya
-        # Ini lebih stabil daripada XPath text-matching via CDPMethods
         self.driver.execute_script(f"""
             var paragraphs = document.querySelectorAll("p.css-mem2yx");
             for (var p of paragraphs) {{
                 if (p.textContent.trim() === "{tab_name}") {{
-                    // Klik parent container-nya (div.label yang wrapping SVG + p + SVG)
                     var clickTarget = p.parentElement;
                     if (clickTarget) clickTarget.click();
                     break;
@@ -80,16 +77,39 @@ class TestJobSearch(BaseJobScenario):
         if tab_name == "Semua Filter":
             print("[DEBUG] Menunggu render modal filter...")
             self.driver.wait_for_element_present('.MuiModal-root', timeout=15)
-            self.driver.sleep(1.5)
+
+            # Tunggu bukan cuma modal-nya, tapi LABEL CHECKBOX-nya juga sudah ada
+            # Ini yang selalu gagal di CI — modal ada tapi konten belum render
+            self.driver.wait_for_element_present(
+                '.MuiModal-root label.MuiFormControlLabel-root', timeout=15
+            )
+
+            # Extra buffer untuk headless CI (animasi MUI lebih lambat tanpa GPU)
+            self.driver.sleep(2)
+
 
     def selectFilterCheckbox(self, label_text):
         print(f"[DEBUG] Memilih opsi filter: '{label_text}'")
 
-        # Tunggu modal fully rendered
+        # Tunggu label sudah ada dulu (redundant tapi aman sebagai safety net)
         self.driver.wait_for_element_present(
-            '.MuiModal-root .MuiFormGroup-root', timeout=15)
+            '.MuiModal-root label.MuiFormControlLabel-root', timeout=15)
 
-        # WAJIB: wrap dalam IIFE karena CDP evaluate tidak support top-level return
+        # Debug: print semua label yang ditemukan untuk diagnosa jika masih gagal
+        found_labels = self.driver.execute_script("""
+            (function() {
+                var modal = document.querySelector('.MuiModal-root');
+                if (!modal) return [];
+                var labels = modal.querySelectorAll('label.MuiFormControlLabel-root');
+                var texts = [];
+                for (var i = 0; i < labels.length; i++) {
+                    texts.push(labels[i].textContent.trim());
+                }
+                return texts;
+            })()
+        """)
+        print(f"[DEBUG] Label ditemukan di modal: {found_labels}")
+
         clicked = self.driver.execute_script(f"""
             (function() {{
                 var modal = document.querySelector('.MuiModal-root');
