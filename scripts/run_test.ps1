@@ -26,8 +26,8 @@ switch ($Target.ToLower()) {
         python -m pytest .\src\tests\test_registration.py -n 5 -v --html=report.html
     }
     "login" {
-        Write-Host "`n[INFO] Memulai Eksekusi Test Login (Parallel: 2 Workers)..." -ForegroundColor Cyan
-        python -m pytest .\src\tests\test_login.py -n 2 -v --html=report.html
+        Write-Host "`n[INFO] Memulai Eksekusi Test Login (Parallel: 3 Workers)..." -ForegroundColor Cyan
+        python -m pytest .\src\tests\test_login.py -n 3 -v --html=report.html
     }
     "all" {
         Write-Host "`n[INFO] Memulai Eksekusi Semua Test Suite..." -ForegroundColor Cyan

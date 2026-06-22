@@ -11,3 +11,8 @@ def test_regis_happy_path():
 def test_login_negative_empty_fields():
     app = Karir()
     app.formLogin_Negative_EmptyFields()
+    
+@pytest.mark.run(order=3)
+def test_login_negative_invalid_email():
+    app = Karir()
+    app.formLogin_Negative_InvalidEmail()

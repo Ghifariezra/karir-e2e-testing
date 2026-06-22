@@ -335,6 +335,27 @@ class Karir(BaseTest):
         self.test_login.assertSubmitButtonDisabled()
         self.test_login.saveScreenshot("login_negative_empty")
         print("[INFO] Negative Test (Empty Fields) Login PASSED.")
+        
+    def formLogin_Negative_InvalidEmail(self):
+        """Skenario Negatif: Submit dengan email tidak valid, lalu muncul error format email"""
+        self._time.sleep(2)
+        print("[INFO] Membuka halaman Login (Negative Test - Invalid Email)...")
+        self.driver.get(self.__listURL["login"])
+        self._time.sleep(3)
+
+        # 1. Input Email tidak valid
+        self.test_login.testEmail("budi.santoso.tanpadomain")
+
+        # 2. Klik Lanjutkan
+        self.test_login.clickSubmitButton("Lanjutkan")
+        self._time.sleep(3)
+
+        # 3. Asersi Ekspektasi
+        self.test_login.saveScreenshot("login_negative_invalid_email")
+        self.test_login.assertErrorMessage(
+            "Format email harus seperti email@karir.com.")
+        print(
+            "[INFO] Negative Test (Invalid Email) Login PASSED. Error format email berhasil divalidasi.")
 
     def formSearch(self):
         self._time.sleep(2)
