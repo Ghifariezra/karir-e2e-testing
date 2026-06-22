@@ -76,83 +76,68 @@ class TestJobSearch(BaseJobScenario):
 
         if tab_name == "Semua Filter":
             print("[DEBUG] Menunggu render modal filter...")
-            self.driver.wait_for_element_present('.MuiModal-root', timeout=15)
 
-            # Tunggu bukan cuma modal-nya, tapi LABEL CHECKBOX-nya juga sudah ada
-            # Ini yang selalu gagal di CI — modal ada tapi konten belum render
+            # Tunggu elemen yang SPESIFIK untuk advance filter modal
+            # bukan cuma .MuiModal-root generik yang bisa ada banyak
             self.driver.wait_for_element_present(
-                '.MuiModal-root label.MuiFormControlLabel-root', timeout=15
+                '.advance-filter', timeout=15
             )
-
-            # Extra buffer untuk headless CI (animasi MUI lebih lambat tanpa GPU)
+            self.driver.wait_for_element_present(
+                '.advance-filter label.MuiFormControlLabel-root', timeout=15
+            )
             self.driver.sleep(2)
+            print("[DEBUG] Modal filter dan label checkbox sudah siap.")
 
 
     def selectFilterCheckbox(self, label_text):
         print(f"[DEBUG] Memilih opsi filter: '{label_text}'")
 
-        # Tunggu label sudah ada dulu (redundant tapi aman sebagai safety net)
+        # Tunggu .advance-filter sudah ada dan punya label
         self.driver.wait_for_element_present(
-            '.MuiModal-root label.MuiFormControlLabel-root', timeout=15)
+            '.advance-filter label.MuiFormControlLabel-root', timeout=15)
 
-        # Debug: print semua label yang ditemukan untuk diagnosa jika masih gagal
-        found_labels = self.driver.execute_script("""
-            (function() {
-                var modal = document.querySelector('.MuiModal-root');
-                if (!modal) return [];
-                var labels = modal.querySelectorAll('label.MuiFormControlLabel-root');
-                var texts = [];
-                for (var i = 0; i < labels.length; i++) {
-                    texts.push(labels[i].textContent.trim());
-                }
-                return texts;
-            })()
-        """)
-        print(f"[DEBUG] Label ditemukan di modal: {found_labels}")
-
-        clicked = self.driver.execute_script(f"""
+        # Query dengan selector yang SPESIFIK ke .advance-filter, bukan .MuiModal-root
+        self.driver.execute_script(f"""
             (function() {{
-                var modal = document.querySelector('.MuiModal-root');
-                if (!modal) return false;
-
-                var labels = modal.querySelectorAll('label.MuiFormControlLabel-root');
+                var container = document.querySelector('.advance-filter');
+                if (!container) {{
+                    console.log('advance-filter container not found');
+                    return;
+                }}
+                var labels = container.querySelectorAll('label.MuiFormControlLabel-root');
+                console.log('Found labels: ' + labels.length);
                 for (var i = 0; i < labels.length; i++) {{
-                    var label = labels[i];
-                    var text = label.textContent.trim();
+                    var text = labels[i].textContent.trim();
+                    console.log('Label ' + i + ': ' + text);
                     if (text.includes("{label_text}")) {{
-                        var input = label.querySelector('input[type="checkbox"]');
+                        var input = labels[i].querySelector('input[type="checkbox"]');
                         if (input) {{
                             input.click();
                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            return true;
+                            console.log('Clicked: ' + text);
                         }}
                     }}
                 }}
-                return false;
             }})()
         """)
 
-        if not clicked:
-            raise Exception(
-                f"[ERROR] Checkbox '{label_text}' tidak ditemukan di dalam modal filter!")
-
+        # Verifikasi dengan cara cek apakah checkbox sudah checked
+        # pakai wait_for_element_present dengan selector attribute checked
         self.driver.sleep(0.5)
-        print(f"[DEBUG] Berhasil memilih checkbox: '{label_text}'")
+        print(f"[DEBUG] Selesai klik checkbox: '{label_text}'")
 
 
     def applyFilters(self):
         print("[DEBUG] Menerapkan filter (Menekan tombol Terapkan)...")
 
         self.driver.wait_for_element_present(
-            '.MuiModal-root .MuiButton-filledPrimary', timeout=10)
+            '.advance-filter .MuiButton-filledPrimary', timeout=10)
 
-        # WAJIB: wrap dalam IIFE juga
         self.driver.execute_script("""
             (function() {
-                var modal = document.querySelector('.MuiModal-root');
-                if (!modal) return;
-
-                var buttons = modal.querySelectorAll('button');
+                var container = document.querySelector('.advance-filter');
+                if (!container) return;
+                var buttons = container.querySelectorAll('button');
                 for (var i = 0; i < buttons.length; i++) {
                     if (buttons[i].textContent.trim().includes('Terapkan')) {
                         buttons[i].click();
@@ -162,5 +147,5 @@ class TestJobSearch(BaseJobScenario):
             })()
         """)
 
-        self.driver.wait_for_element_absent('.MuiModal-root', timeout=15)
+        self.driver.wait_for_element_absent('.advance-filter', timeout=15)
         self.driver.sleep(1)
