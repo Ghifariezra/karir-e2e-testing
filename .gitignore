@@ -21,9 +21,9 @@ last_report.html
 downloaded_files/
 
 # Mengabaikan screenshot biner yang sifatnya sementara (hasil test lokal)
-public/screenshots/login/*
-public/screenshots/registration/*
-!public/screenshots/.gitkeep
+# public/screenshots/login/*
+# public/screenshots/registration/*
+# !public/screenshots/.gitkeep
 
 # --- Kompresi / Arsip (Opsional) ---
 *.zip
