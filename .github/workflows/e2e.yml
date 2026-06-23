@@ -54,7 +54,7 @@ jobs:
         if: always()
         run: |
           mkdir -p public_html
-          cp report.html public_html/
+          cp report.html public_html/index.html
           cp -r assets public_html/ 2>/dev/null || true
           cp -r public public_html/ 2>/dev/null || true
 
