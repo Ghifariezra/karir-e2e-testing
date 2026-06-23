@@ -42,8 +42,25 @@ jobs:
 
       - name: Upload Test Report (Artifact)
         uses: actions/upload-artifact@v4
-         # Memastikan laporan tetap di-upload meskipun ada test yang gagal
         if: always()
         with:
           name: e2e-test-report
-          path: report.html
+          path: |
+            report.html
+            assets/
+            public/screenshots/
+
+      - name: Prepare files for GitHub Pages
+        if: always()
+        run: |
+          mkdir -p public_html
+          cp report.html public_html/
+          cp -r assets public_html/ 2>/dev/null || true
+          cp -r public public_html/ 2>/dev/null || true
+
+      - name: Deploy Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public_html
